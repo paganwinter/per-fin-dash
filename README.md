@@ -1,3 +1,8 @@
+# Personal Financ Dashboard
+
+## Sample Dashboard
+https://paganwinter.github.io/per-fin-dash/src/?stmtFile=/per-fin-dash/samples/statements-sample.xlsx
+
 
 ## Processing Statements
 <!-- - read rules from rules.xlsx -->
