@@ -27,17 +27,17 @@ td, th {
 }
 .inc .amt, .txn.cr .amt {
   font-weight: bold;
-  color: #00cc00;
+  /* color: #00cc00; */
   background-color: #ddffdd;
 }
 .exp .amt, .txn.dr .amt {
   font-weight: bold;
-  color: #cc0000;
+  /* color: #cc0000; */
   background-color: #ffdddd
 }
 .ass .amt {
   font-weight: bold;
-  color: #0000cc;
+  /* color: #0000cc; */
   background-color: #ddddff;
 }
 

@@ -248,3 +248,52 @@ function drawNetworthChart(el, data, accountsList) {
     series,
   })
 }
+
+function drawChart1(el, chartData) {
+  // const chartData = Object.values(accounts).map((acct) => ({ acctId: acct.id, total: acct.total }))
+
+  // const chartData = []
+  // for (let id in accounts) {
+  //   chartData.push({
+  //     accountId: id,
+  //     total: accounts[id].total,
+  //   })
+  // }
+  // chartData = chartData.filter(acct => acct.total !== 0)
+
+  const chart = am4core.create(el, am4charts.XYChart);
+  chart.padding(40, 40, 40, 40);
+
+  var categoryAxis = chart.yAxes.push(new am4charts.CategoryAxis());
+  categoryAxis.dataFields.category = 'acctId';
+  categoryAxis.renderer.grid.template.location = 0;
+  categoryAxis.renderer.minGridDistance = 1;
+  categoryAxis.renderer.inversed = true;
+  categoryAxis.renderer.grid.template.disabled = true;
+  
+  const valueAxis = chart.xAxes.push(new am4charts.ValueAxis());
+  valueAxis.min = 0;
+  
+  const series = chart.series.push(new am4charts.ColumnSeries());
+  series.dataFields.categoryY = 'acctId';
+  series.dataFields.valueX = 'total';
+  series.tooltipText = "{valueX.value}"
+  series.columns.template.strokeOpacity = 0;
+  series.columns.template.column.cornerRadiusBottomRight = 2;
+  series.columns.template.column.cornerRadiusTopRight = 2;
+
+  const labelBullet = series.bullets.push(new am4charts.LabelBullet())
+  labelBullet.label.horizontalCenter = "left";
+  labelBullet.label.dx = 10;
+  labelBullet.label.text = "{values.valueX.workingValue.formatNumber('#.0as')}";
+  // labelBullet.label.text = "{values.valueX.workingValue}";
+  labelBullet.locationX = 1;
+  
+  // as by default columns of the same series are of the same color, we add adapter which takes colors from chart.colors color set
+  series.columns.template.adapter.add("fill", function(fill, target){
+    return chart.colors.getIndex(target.dataItem.index);
+  });
+  
+  categoryAxis.sortBySeries = series;
+  chart.data = chartData
+}

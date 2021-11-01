@@ -333,7 +333,15 @@ function calculateSummary(txns, accountsListMaster) {
     const acct = { ...accountsTree.all[id] }
     accountsTree[acct.type] = accountsTree[acct.type] || {}
     accountsTree[acct.type][acct.id] = acct
+
+    const acctTypeTotal = accountsTree[acct.type][acct.type].total
+    if (acctTypeTotal) {
+      accountsTree[acct.type][acct.id].perc = num(acct.total / acctTypeTotal * 100)
+    } else {
+      accountsTree[acct.type][acct.id].perc = 0
+    }
   }
+  // console.log(accountsTree)
 
   return { aggregate, accountsList, accountsTree }
 }

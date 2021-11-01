@@ -5,6 +5,10 @@
 <link rel="stylesheet" href="css/bootstrap-4.css" crossorigin="anonymous">
 <link rel="stylesheet" type="text/css" href="css/style.css" />
 
+<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+<script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+
 <script src="js/contrib/xlsx.min.js"></script>
 <script src="js/contrib/vue.js"></script>
 <script src="js/contrib/highcharts.js"></script>
@@ -73,10 +77,26 @@ window.onload = async function () {
   console.log({ yearSummary })
   // console.table(yearSummary)
 
+  function updateSummary(txns, acctsList) {
+    const summary = calculateSummary(txns, acctsList)
+
+
+    const levels = []
+    const tree = {}
+    for (let id in summary.accountsTree.ass) {
+      const acct = summary.accountsTree.ass[id]
+      const pathArr = acct.id.split('-')
+      console.log(id, pathArr)
+      // tree
+    }
+
+    return summary
+  }
 
   console.time('create app')
   app = new Vue({
     el: '#app',
+
     data() {
       return {
         allTxns: txns,
@@ -91,33 +111,26 @@ window.onload = async function () {
         yearSummary,
       }
     },
-    beforeCreate() {
-      console.log('beforeCreate')
-      console.time('beforeCreate')
-    },
-    created() {
-      console.timeEnd('beforeCreate')
-      console.log('created')
-      console.time('created')
-    },
-    beforeMount() {
-      console.timeEnd('created')
-      console.log('beforeMount')
-      console.time('beforeMount')
-    },
-    beforeUpdated() {
-      console.timeEnd('beforeMount')
-      console.log('beforeUpdated')
-    },
-    updated() {
-      console.log('updated')
-    },
+
+    beforeCreate() {},
+    created() {},
+    beforeMount() {},
+    beforeUpdated() {},
+    updated() {},
     mounted(){
-      console.timeEnd('beforeMount')
-      console.log('mounted')
-      const chartData = [ { ...this.summary, period: 'range1' } ]
-      drawSummaryChart('graph-range-summary', chartData, this.accountsList)
+      console.timeEnd('create app')
+
+      this.summary = updateSummary(this.filteredTxns, this.accountsList)
+
+      drawSummaryChart('graph-month-summary', monthSummary, accountsList)
+      drawNetworthChart('graph-month-networth', monthSummary, accountsList)
+
+      // drawSummaryChart('graph-year-summary', yearSummary, accountsList)
+      // drawNetworthChart('graph-year-networth', yearSummary, accountsList)
+
+      // TODO: scatter plot of exp by day of year
     },
+
     computed: {
       filteredTxns() {
         const filt = { ...this.filters }
@@ -130,28 +143,22 @@ window.onload = async function () {
         if (filt.maxAmt) filt.maxAmt = +filt.maxAmt
         // console.log({ filters: filt })
 
-        console.time('filterTxns')
+        // console.time('filterTxns')
         const txns = filterTxns(this.allTxns, filt)
-        console.timeEnd('filterTxns')
+        // console.timeEnd('filterTxns')
         // console.log('filteredTxns', txns)
 
         return txns
       },
-      // summary() {
-      //   return calculateSummary(this.filteredTxns, this.accountsList)
-      // }
     },
     methods: {
       fmtAmt(val) {
         return fmtAmt(val)
       },
       filterTxns() {
-        this.summary = calculateSummary(this.filteredTxns, this.accountsList)
-        const chartData = [ { ...this.summary, period: 'range' } ]
-        drawSummaryChart('graph-range-summary', chartData, this.accountsList)
+        this.summary = updateSummary(this.filteredTxns, this.accountsList)
       },
       acctTree(ev) {
-        // console.log(ev)
         const acctRow = ev.target.parentNode
         const acctId = acctRow.getAttribute('data-acct-id')
         const acctType = acctId.split('-')[0]
@@ -183,66 +190,39 @@ window.onload = async function () {
       },
     },
   })
-  console.timeEnd('create app')
-
-  drawSummaryChart('graph-month-summary', monthSummary, accountsList)
-  drawNetworthChart('graph-month-networth', monthSummary, accountsList)
-  drawSummaryChart('graph-year-summary', yearSummary, accountsList)
-  drawNetworthChart('graph-year-networth', yearSummary, accountsList)
-
-  // TODO: scatter plot of exp by day of year
 }
 </script>
 
 
 <div id="app" class="">
   <div id="main-tabs">
-    <div class="tab-menu active" data-tab="txns-main" onclick="tabber(this)">Main</div>
+    <div class="tab-menu active" data-tab="main-summary" onclick="tabber(this)">Main</div>
     <div class="tab-menu" data-tab="month-summary" onclick="tabber(this)">Monthly</div>
     <div class="tab-menu" data-tab="year-summary" onclick="tabber(this)">Yearly</div>
   </div>
 
   <div id="main-content">
-    
-    <div id="txns-main" class="tab-content active">
+    <div id="main-summary" class="tab-content active">
       <div class="container-fluid">
         <div class="row">
           <div class="col-sm">
-            <div id="graph-range-summary" class="chart" style="height: 300px;"></div>
+            <div id="main-filters">
+              From:<input type="date" v-model="filters.startDate" v-on:change="filterTxns" />
+              To:<input type="date" v-model="filters.endDate" v-on:change="filterTxns" />
+              Accounts:
+              <select v-model="filters.accounts" v-on:change="filterTxns" >
+                <option>-</option>
+                <option value="">all</option>
+                <option v-for="acct in accountsTree.all" v-bind:value="acct.id">
+                  {{ acct.id }}
+                </option>
+              </select>
+            </div>
           </div>
         </div>
         <div class="row">
           <div class="col-sm">
-            <table class="summary-table">
-              <tr
-              class="acct inc"
-              v-bind:class="{ expanded: acct.id.split('-').length === 1, hidden: acct.id.split('-').length > 2 }"
-              :data-acct-id="acct.id"
-              :data-parent-acct-id="acct.parent"
-              v-for="acct in summary.accountsTree.inc">
-                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">
-                  {{ acct.id.split('-').slice(-1)[0] }}
-                </td>
-                <td class="amt">{{ fmtAmt(-acct.total) }}</td>
-              </tr>
-            </table>
-          </div>
-          <div class="col-sm">
-            <table class="summary-table">
-              <tr
-              class="acct exp"
-              v-bind:class="{ expanded: acct.id.split('-').length === 1, hidden: acct.id.split('-').length > 2 }"
-              :data-acct-id="acct.id"
-              :data-parent-acct-id="acct.parent"
-              v-for="acct in summary.accountsTree.exp">
-                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">
-                  {{ acct.id.split('-').slice(-1)[0] }}
-                </td>
-                <td class="amt">{{ fmtAmt(acct.total) }}</td>
-              </tr>
-            </table>
-          </div>
-          <div class="col-sm">
+            <div id="graph-main-assets"></div>
             <table class="summary-table">
               <tr
               class="acct ass"
@@ -250,34 +230,167 @@ window.onload = async function () {
               :data-acct-id="acct.id"
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.ass">
-                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">
-                  {{ acct.id.split('-').slice(-1)[0] }}
-                </td>
-                <td class="amt">{{ fmtAmt(acct.total) }}</td>
+                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*15) + 'px' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #0066ff '+(acct.perc)+'%, #cce0ff '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(acct.total) }}</span></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-sm">
+            <div id="graph-main-income"></div>
+            <table class="summary-table">
+              <tr
+              class="acct inc"
+              v-bind:class="{ expanded: acct.id.split('-').length === 1, hidden: acct.id.split('-').length > 2 }"
+              :data-acct-id="acct.id"
+              :data-parent-acct-id="acct.parent"
+              v-for="acct in summary.accountsTree.inc">
+                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*15) + 'px' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #00bb44 '+(acct.perc)+'%, #bbffbb '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(-acct.total) }}</span></td>
+              </tr>
+            </table>
+          </div>
+          <div class="col-sm">
+            <div id="graph-main-expense"></div>
+            <table class="summary-table">
+              <tr
+              class="acct exp"
+              v-bind:class="{ expanded: acct.id.split('-').length === 1, hidden: acct.id.split('-').length > 2 }"
+              :data-acct-id="acct.id"
+              :data-parent-acct-id="acct.parent"
+              v-for="acct in summary.accountsTree.exp">
+                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*15) + 'px' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #cc0000 '+(acct.perc)+'%, #ffcccc '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(-acct.total) }}</span></td>
+            </tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm">
+            <table id="summ-tbl" style="width: 400px;">
+              <tr>
+                <td>Transactions</td><td class="">{{ filteredTxns.length.toLocaleString() }}</td>
+              </tr>
+              <tr>
+                <td>Credits</td><td class="amt">{{ fmtAmt(summary.aggregate.credits) }}</td>
+              </tr>
+              <tr>
+                <td>Debits</td><td class="amt">{{ fmtAmt(summary.aggregate.debits) }}</td>
+              </tr>
+              <tr>
+                <td>Balance</td><td class="amt">{{ fmtAmt(summary.aggregate.balance) }}</td>
               </tr>
             </table>
           </div>
         </div>
-      </div>
 
-      <div id="summary">
-        <table id="summ-tbl" style="width: 400px;">
-          <tr>
-            <td>Transactions</td><td class="">{{ filteredTxns.length.toLocaleString() }}</td>
-          </tr>
-          <tr>
-            <td>Credits</td><td class="amt">{{ fmtAmt(summary.aggregate.credits) }}</td>
-          </tr>
-          <tr>
-            <td>Debits</td><td class="amt">{{ fmtAmt(summary.aggregate.debits) }}</td>
-          </tr>
-          <tr>
-            <td>Balance</td><td class="amt">{{ fmtAmt(summary.aggregate.balance) }}</td>
-          </tr>
-          <tr><td></td></tr>
-        </table>
       </div>
-    
+    </div>
+
+    <div id="month-summary" class="tab-content">
+      <div id="graph-month-summary" class="chart" style="height: 500px;"></div>
+      <div id="graph-month-networth" class="chart" style="height: 300px;"></div>
+      <table>
+        <tr>
+          <th>Item</th><th v-for="item in monthSummary">{{ item.period }}</th>
+        </tr>
+
+<!--
+        <tr><td>Income</td></tr>
+        <tr
+          v-for="acct in accountsTree.inc"
+          class="acct inc expanded"
+          :data-parent-acct-id="acct.parent"
+          :data-acct-id="acct.id"
+          >
+          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
+          <td class="amt" v-for="item in monthSummary">{{ fmtAmt(item.accountsTree.inc[acct.id].total) }}</td>
+        </tr>
+
+        <tr><td>Expense</td></tr>
+        <tr
+          v-for="acct in accountsTree.exp"
+          class="acct exp expanded"
+          :data-parent-acct-id="acct.parent"
+          :data-acct-id="acct.id"
+          >
+          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
+          <td class="amt" v-for="item in monthSummary">{{ fmtAmt(item.accountsTree.exp[acct.id].total) }}</td>
+        </tr>
+
+        <tr><td>Assets</td></tr>
+        <tr
+          v-for="acct in accountsTree.ass"
+          class="acct ass expanded"
+          :data-parent-acct-id="acct.parent"
+          :data-acct-id="acct.id"
+          >
+          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
+          <td class="amt" v-for="item in monthSummary">
+            {{ fmtAmt(item.accountsTree.ass[acct.id].total) }}
+          </td>
+        </tr>
+
+        <tr><td>Balances</td></tr>
+        <tr v-for="acct in accountsList.ass" class="ass">
+          <td>{{ acct.id }}</td>
+          <td class="amt" v-for="item in monthSummary">{{ fmtAmt(item.balances.ass[acct.id].balance) }}</td>
+        </tr>
+-->
+      </table>
+    </div>
+
+    <div id="year-summary" class="tab-content">
+      <div id="graph-year-summary" class="chart" style="height: 500px;"></div>
+      <div id="graph-year-networth" class="chart" style="height: 300px;"></div>
+      <table>
+        <tr>
+          <th>Item</th><th v-for="item in yearSummary">{{ item.period }}</th>
+        </tr>
+<!--
+        <tr><td>Income</td></tr>
+        <tr
+          v-for="acct in accountsTree.inc"
+          class="acct inc expanded"
+          :data-parent-acct-id="acct.parent"
+          :data-acct-id="acct.id"
+          >
+          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
+          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.accountsTree.inc[acct.id].total) }}</td>
+        </tr>
+
+        <tr><td>Expense</td></tr>
+        <tr
+          v-for="acct in accountsTree.exp"
+          class="acct exp expanded"
+          :data-parent-acct-id="acct.parent"
+          :data-acct-id="acct.id"
+          >
+          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
+          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.accountsTree.exp[acct.id].total) }}</td>
+        </tr>
+
+        <tr><td>Assets</td></tr>
+        <tr
+          v-for="acct in accountsTree.ass"
+          class="acct ass expanded"
+          :data-parent-acct-id="acct.parent"
+          :data-acct-id="acct.id"
+          >
+          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
+          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.accountsTree.ass[acct.id].total) }}</td>
+        </tr>
+
+        <tr><td>Balances</td></tr>
+        <tr v-for="acct in accountsList.ass" class="ass">
+          <td>{{ acct.id }}</td>
+          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.balances.ass[acct.id].balance) }}</td>
+        </tr>
+-->
+      </table>
+    </div>
+
+    <div id="txns-main" class="tab-content">
       <table id="txns-list" class="">
         <tr class="txns-list-filter">
           <th id="filter-id">
@@ -375,7 +488,7 @@ window.onload = async function () {
           </th>
         </tr>
 
-        <tr class="txn" v-bind:class = "(txn.crdr === 'cr') ? 'cr' : 'dr'" v-for="txn in filteredTxns">
+        <!-- <tr class="txn" v-bind:class = "(txn.crdr === 'cr') ? 'cr' : 'dr'" v-for="txn in filteredTxns">
           <td>{{ txn.id }}</td>
           <td>{{ txn.txnDate.toDateString() }}</td>
           <td>{{ txn.desc }}</td>
@@ -387,109 +500,7 @@ window.onload = async function () {
           <td>{{ txn.ruleId }}</td>
           <td>{{ txn.type }}</td>
           <td>{{ Object.keys(txn.tags).join(',') }}</td>
-        </tr>
-      </table>
-    </div>
-
-    <div id="month-summary" class="tab-content">
-      <div id="graph-month-summary" class="chart" style="height: 500px;"></div>
-      <div id="graph-month-networth" class="chart" style="height: 300px;"></div>
-      <table>
-        <tr>
-          <th>Item</th><th v-for="item in monthSummary">{{ item.period }}</th>
-        </tr>
-
-        <tr><td>Income</td></tr>
-        <tr
-          v-for="acct in accountsTree.inc"
-          class="acct inc expanded"
-          :data-parent-acct-id="acct.parent"
-          :data-acct-id="acct.id"
-          >
-          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
-          <td class="amt" v-for="item in monthSummary">{{ fmtAmt(item.accountsTree.inc[acct.id].total) }}</td>
-        </tr>
-
-        <tr><td>Expense</td></tr>
-        <tr
-          v-for="acct in accountsTree.exp"
-          class="acct exp expanded"
-          :data-parent-acct-id="acct.parent"
-          :data-acct-id="acct.id"
-          >
-          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
-          <td class="amt" v-for="item in monthSummary">{{ fmtAmt(item.accountsTree.exp[acct.id].total) }}</td>
-        </tr>
-
-        <tr><td>Assets</td></tr>
-        <tr
-          v-for="acct in accountsTree.ass"
-          class="acct ass expanded"
-          :data-parent-acct-id="acct.parent"
-          :data-acct-id="acct.id"
-          >
-          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
-          <td class="amt" v-for="item in monthSummary">
-            <!-- {{ fmtAmt(item.accountsTree.ass[acct.id].in) }}<br />
-            -{{ fmtAmt(item.accountsTree.ass[acct.id].out) }}<br /> -->
-            {{ fmtAmt(item.accountsTree.ass[acct.id].total) }}
-          </td>
-        </tr>
-
-        <tr><td>Balances</td></tr>
-        <tr v-for="acct in accountsList.ass" class="ass">
-          <td>{{ acct.id }}</td>
-          <td class="amt" v-for="item in monthSummary">{{ fmtAmt(item.balances.ass[acct.id].balance) }}</td>
-        </tr>
-      </table>
-    </div>
-  
-    <div id="year-summary" class="tab-content">
-      <div id="graph-year-summary" class="chart" style="height: 500px;"></div>
-      <div id="graph-year-networth" class="chart" style="height: 300px;"></div>
-      <table>
-        <tr>
-          <th>Item</th><th v-for="item in yearSummary">{{ item.period }}</th>
-        </tr>
-
-        <tr><td>Income</td></tr>
-        <tr
-          v-for="acct in accountsTree.inc"
-          class="acct inc expanded"
-          :data-parent-acct-id="acct.parent"
-          :data-acct-id="acct.id"
-          >
-          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
-          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.accountsTree.inc[acct.id].total) }}</td>
-        </tr>
-
-        <tr><td>Expense</td></tr>
-        <tr
-          v-for="acct in accountsTree.exp"
-          class="acct exp expanded"
-          :data-parent-acct-id="acct.parent"
-          :data-acct-id="acct.id"
-          >
-          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
-          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.accountsTree.exp[acct.id].total) }}</td>
-        </tr>
-
-        <tr><td>Assets</td></tr>
-        <tr
-          v-for="acct in accountsTree.ass"
-          class="acct ass expanded"
-          :data-parent-acct-id="acct.parent"
-          :data-acct-id="acct.id"
-          >
-          <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*10) + 'px' }">{{ acct.id }}</td>
-          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.accountsTree.ass[acct.id].total) }}</td>
-        </tr>
-
-        <tr><td>Balances</td></tr>
-        <tr v-for="acct in accountsList.ass" class="ass">
-          <td>{{ acct.id }}</td>
-          <td class="amt" v-for="item in yearSummary">{{ fmtAmt(item.balances.ass[acct.id].balance) }}</td>
-        </tr>
+        </tr> -->
       </table>
     </div>
   </div>
