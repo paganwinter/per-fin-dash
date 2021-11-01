@@ -233,7 +233,7 @@ window.onload = async function () {
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.ass">
                 <td class="acct" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span v-on:click="acctTree">{{ acct.id.split('-').slice(-1)[0] }}</span></td>
-                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #0066ff '+(acct.perc)+'%, #cce0ff '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(acct.total) }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #0066ff '+(acct.perc)+'%, #cce0ff '+(acct.perc)+'% 100%)' }" :title="acct.perc + '%'"><span>{{ fmtAmt(acct.total) }}</span></td>
               </tr>
             </table>
           </div>
@@ -248,7 +248,7 @@ window.onload = async function () {
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.inc">
                 <td class="acct" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span v-on:click="acctTree">{{ acct.id.split('-').slice(-1)[0] }}</span></td>
-                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #00bb44 '+(acct.perc)+'%, #bbffbb '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(-acct.total) }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #00bb44 '+(acct.perc)+'%, #bbffbb '+(acct.perc)+'% 100%)' }" :title="acct.perc + '%'"><span>{{ fmtAmt(-acct.total) }}</span></td>
               </tr>
             </table>
           </div>
@@ -263,7 +263,7 @@ window.onload = async function () {
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.exp">
                 <td class="acct" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span v-on:click="acctTree">{{ acct.id.split('-').slice(-1)[0] }}</span></td>
-                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #cc0000 '+(acct.perc)+'%, #ffcccc '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(-acct.total) }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #cc0000 '+(acct.perc)+'%, #ffcccc '+(acct.perc)+'% 100%)' }" :title="acct.perc + '%'"><span>{{ fmtAmt(-acct.total) }}</span></td>
             </tr>
             </table>
           </div>
