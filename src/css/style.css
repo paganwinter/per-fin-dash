@@ -60,6 +60,7 @@ td, th {
 
 .summary-table {
   width: 100%;
+  box-shadow: 0px 3px 10px #aaa;
 }
 
 .acct {

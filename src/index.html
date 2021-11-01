@@ -159,7 +159,7 @@ window.onload = async function () {
         this.summary = updateSummary(this.filteredTxns, this.accountsList)
       },
       acctTree(ev) {
-        const acctRow = ev.target.parentNode
+        const acctRow = ev.target.parentNode.parentNode
         const acctId = acctRow.getAttribute('data-acct-id')
         const acctType = acctId.split('-')[0]
 
@@ -204,6 +204,7 @@ window.onload = async function () {
   <div id="main-content">
     <div id="main-summary" class="tab-content active">
       <div class="container-fluid">
+        <!-- filters -->
         <div class="row">
           <div class="col-sm">
             <div id="main-filters">
@@ -221,6 +222,7 @@ window.onload = async function () {
           </div>
         </div>
         <div class="row">
+          <!-- assests summary -->
           <div class="col-sm">
             <div id="graph-main-assets"></div>
             <table class="summary-table">
@@ -230,11 +232,12 @@ window.onload = async function () {
               :data-acct-id="acct.id"
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.ass">
-                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*15) + 'px' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
+                <td class="acct" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span v-on:click="acctTree">{{ acct.id.split('-').slice(-1)[0] }}</span></td>
                 <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #0066ff '+(acct.perc)+'%, #cce0ff '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(acct.total) }}</span></td>
               </tr>
             </table>
           </div>
+          <!-- income summary -->
           <div class="col-sm">
             <div id="graph-main-income"></div>
             <table class="summary-table">
@@ -244,11 +247,12 @@ window.onload = async function () {
               :data-acct-id="acct.id"
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.inc">
-                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*15) + 'px' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
+                <td class="acct" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span v-on:click="acctTree">{{ acct.id.split('-').slice(-1)[0] }}</span></td>
                 <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #00bb44 '+(acct.perc)+'%, #bbffbb '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(-acct.total) }}</span></td>
               </tr>
             </table>
           </div>
+          <!-- expense summary -->
           <div class="col-sm">
             <div id="graph-main-expense"></div>
             <table class="summary-table">
@@ -258,7 +262,7 @@ window.onload = async function () {
               :data-acct-id="acct.id"
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.exp">
-                <td v-on:click="acctTree" class="acct" v-bind:style="{ 'padding-left': (10 + acct.level*15) + 'px' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
+                <td class="acct" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span v-on:click="acctTree">{{ acct.id.split('-').slice(-1)[0] }}</span></td>
                 <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #cc0000 '+(acct.perc)+'%, #ffcccc '+(acct.perc)+'% 100%)' }"><span>{{ fmtAmt(-acct.total) }}</span></td>
             </tr>
             </table>
