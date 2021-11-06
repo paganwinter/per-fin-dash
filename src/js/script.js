@@ -51,7 +51,7 @@ function extractTxns(statementsFile) {
   const statements = XLSX.utils.sheet_to_json(statementsFile.Sheets['statements'], {})
     .filter(stmt => stmt.enabled)
     .map(stmt => stmt.name)
-  console.log('statements:', statements)
+  // console.log('statements:', statements)
   statements.forEach(stmt => {
     const sheet = statementsFile.Sheets[stmt]
     const txns = XLSX.utils.sheet_to_json(sheet, {})
@@ -84,11 +84,15 @@ function getDates(txns) {
   const endYear = endDate.getFullYear()
   const startMonth = startDate.getMonth() + 1
   const endMonth = endDate.getMonth() + 1
+
   const years = []
   const months = []
   for (let y = +startYear; y <= +endYear; y++) {
     years.push(`${y}`)
-    for (let m = 1; m <= 12; m++) {
+
+    const firstMonth = (y === startYear) ? startMonth : 1
+    const lastMonth = (y === endYear) ? endMonth : 12
+    for (let m = firstMonth; m <= lastMonth; m++) {
       const mm = (''+m).padStart(2, '0')
       months.push(`${y}-${mm}`)
     }
@@ -99,7 +103,7 @@ function getDates(txns) {
 
 
 function processTxns(rawTxns) {
-  console.time('enrich txns')
+  // console.time('enrich txns')
   let allAccounts = {}
   let accountsList = {
     all: {},
@@ -218,7 +222,7 @@ function processTxns(rawTxns) {
   // calculate date ranges and stuff
   const dates = getDates(txns)
 
-  console.timeEnd('enrich txns')
+  // console.timeEnd('enrich txns')
 
   return { txns, accountsList, accountsTree, dates }
 }
@@ -343,15 +347,29 @@ function calculateSummary(txns, accountsListMaster) {
   }
   // console.log(accountsTree)
 
+  aggregate.inc = {
+    total: -accountsTree.inc.inc.total,
+  }
+  aggregate.exp = {
+    total: accountsTree.exp.exp.total,
+    perc: num(accountsTree.exp.exp.total / -accountsTree.inc.inc.total * 100)
+  }
+  aggregate.ass = {
+    total: accountsTree.ass.ass.total,
+    perc: num(accountsTree.ass.ass.total / -accountsTree.inc.inc.total * 100)
+  }
+
   return { aggregate, accountsList, accountsTree }
 }
 
 
 
 
-function getMonthlySummary(txns, months, accountsList) {
+function getMonthlySummary(txns, accountsList) {
+  const dates = getDates(txns)
+
   let summaries = []
-  months.forEach((yearMonth, i) => {
+  dates.months.forEach((yearMonth, i) => {
     const filteredTxns = filterTxns(txns, { yearMonth })
     const summary = calculateSummary(filteredTxns, accountsList)
     if (summary.error) console.error(summary.error)
@@ -360,6 +378,9 @@ function getMonthlySummary(txns, months, accountsList) {
       ass: {},
     }
     const prevPeriod = summaries[i - 1]
+
+    // console.log(yearMonth, i, prevPeriod, summaries)
+
     for (let id in summary.accountsList.ass) {
       const acct = summary.accountsList.ass[id]
       balances.ass[acct.id] = { id: acct.id }
@@ -367,15 +388,18 @@ function getMonthlySummary(txns, months, accountsList) {
       const curTotal = acct.total
       balances.ass[acct.id].balance = num(prevBal + curTotal)
     }
+    // console.log(balances)
 
     summaries.push({ period: yearMonth, ...summary, balances })
   })
   return summaries
 }
 
-function getYearlySummary(txns, years, accountsList) {
+function getYearlySummary(txns, accountsList) {
+  const dates = getDates(txns)
+
   let summaries = []
-  years.forEach((year, i) => {
+  dates.years.forEach((year, i) => {
     const filteredTxns = filterTxns(txns, { year })
     const summary = calculateSummary(filteredTxns, accountsList)
     if (summary.error) console.error(summary.error)
