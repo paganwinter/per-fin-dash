@@ -263,6 +263,8 @@ function filterTxns(txns, filters) {
 
 
 function calculateSummary(txns, accountsListMaster) {
+  const dates = getDates(txns)
+
   // total credits, debits, and balance
   const aggregate = {
     credits: 0,
@@ -344,11 +346,16 @@ function calculateSummary(txns, accountsListMaster) {
     } else {
       accountsTree[acct.type][acct.id].perc = 0
     }
+
+    // monthly avg
+    accountsTree[acct.type][acct.id].avg = num(acct.total / dates.months.length)
   }
   // console.log(accountsTree)
+  // console.log(dates)
 
   aggregate.inc = {
     total: -accountsTree.inc.inc.total,
+    perc: 100,
   }
   aggregate.exp = {
     total: accountsTree.exp.exp.total,

@@ -5,9 +5,9 @@
 <link rel="stylesheet" href="css/bootstrap-4.css" crossorigin="anonymous">
 <link rel="stylesheet" type="text/css" href="css/style.css" />
 
-<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/flow.js"></script>
-<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+<script src="js/contrib/amcharts-5.js"></script>
+<script src="js/contrib/amcharts-5-flow.js"></script>
+<script src="js/contrib/amcharts-5-themes-animated.js"></script>
 
 <script src="js/contrib/xlsx.min.js"></script>
 <script src="js/contrib/vue.js"></script>
@@ -179,7 +179,11 @@ window.onload = async function () {
         // TODO: waterfall chart for net worth by year
         drawSummaryChart('graph-month-summary', this.monthSummary, this.accountsList)
         drawNetworthChart('graph-month-networth', this.monthSummary, this.accountsList)
+
         drawCashFlow('graph-cash-flow', this.summary)
+        drawCashFlow2('graph-cash-flow-inc', this.summary, 'inc')
+        drawCashFlow2('graph-cash-flow-exp', this.summary, 'exp')
+        drawCashFlow2('graph-cash-flow-ass', this.summary, 'ass')
       },
       filterTxns() {
         this.updateSummary()
@@ -274,26 +278,14 @@ window.onload = async function () {
 
         <div class="row">
           <div class="col-sm">
-            <div id="graph-cash-flow" style="width: 100%; height: 500px;"></div>
+            <div id="graph-cash-flow" style="margin: 20px 0; width: 100%; height: 300px;"></div>
+            <div id="graph-cash-flow-inc" style="margin: 20px 0; width: 100%; height: 200px;"></div>
+            <div id="graph-cash-flow-exp" style="margin: 20px 0; width: 100%; height: 200px;"></div>
+            <div id="graph-cash-flow-ass" style="margin: 20px 0; width: 100%; height: 200px;"></div>
           </div>
         </div>
   
         <div class="row">
-          <!-- assests summary -->
-          <div class="col-sm">
-            <div id="graph-main-assets"></div>
-            <table class="summary-table">
-              <tr
-              class="acct ass"
-              v-bind:class="{ expanded: acct.id.split('-').length === 1, hidden: acct.id.split('-').length > 2 }"
-              :data-acct-id="acct.id"
-              :data-parent-acct-id="acct.parent"
-              v-for="acct in summary.accountsTree.ass">
-                <td class="acct" v-on:click="acctTree" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
-                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #0066ff '+(acct.perc)+'%, #cce0ff '+(acct.perc)+'% 100%)' }" :title="acct.perc + '%'"><span>{{ fmtAmt(acct.total) }}</span></td>
-              </tr>
-            </table>
-          </div>
           <!-- income summary -->
           <div class="col-sm">
             <div id="graph-main-income"></div>
@@ -320,8 +312,23 @@ window.onload = async function () {
               :data-parent-acct-id="acct.parent"
               v-for="acct in summary.accountsTree.exp">
                 <td class="acct" v-on:click="acctTree" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
-                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #cc0000 '+(acct.perc)+'%, #ffcccc '+(acct.perc)+'% 100%)' }" :title="acct.perc + '%'"><span>{{ fmtAmt(-acct.total) }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #cc0000 '+(acct.perc)+'%, #ffcccc '+(acct.perc)+'% 100%)' }" :title="acct.perc+'%'+' ('+fmtAmt(-acct.avg)+')'"><span>{{ fmtAmt(-acct.total) }}</span></td>
             </tr>
+            </table>
+          </div>
+          <!-- assests summary -->
+          <div class="col-sm">
+            <div id="graph-main-assets"></div>
+            <table class="summary-table">
+              <tr
+              class="acct ass"
+              v-bind:class="{ expanded: acct.id.split('-').length === 1, hidden: acct.id.split('-').length > 2 }"
+              :data-acct-id="acct.id"
+              :data-parent-acct-id="acct.parent"
+              v-for="acct in summary.accountsTree.ass">
+                <td class="acct" v-on:click="acctTree" v-bind:style="{ 'padding-left': ((acct.level+1)*15) + 'px', backgroundColor: 'rgba(127, 127, 127, '+((acct.level+1)/10)+')' }"><span>{{ acct.id.split('-').slice(-1)[0] }}</span></td>
+                <td class="amt" v-bind:style="{ background: 'linear-gradient(to right, #0066ff '+(acct.perc)+'%, #cce0ff '+(acct.perc)+'% 100%)' }" :title="acct.perc + '%'"><span>{{ fmtAmt(acct.total) }}</span></td>
+              </tr>
             </table>
           </div>
         </div>
