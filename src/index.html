@@ -5,9 +5,9 @@
 <link rel="stylesheet" href="css/bootstrap-4.css" crossorigin="anonymous">
 <link rel="stylesheet" type="text/css" href="css/style.css" />
 
-<script src="https://cdn.amcharts.com/lib/4/core.js"></script>
-<script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
-<script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/flow.js"></script>
+<script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
 
 <script src="js/contrib/xlsx.min.js"></script>
 <script src="js/contrib/vue.js"></script>
@@ -16,6 +16,7 @@
 <script src="js/utils.js"></script>
 <script src="js/script.js"></script>
 <script src="js/charts.js"></script>
+<script src="js/cash-flow-chart.js"></script>
 
 </head>
 <body>
@@ -131,6 +132,7 @@ window.onload = async function () {
     mounted(){
       console.timeEnd('app mounted')
       // this.updateSummary()
+      // draw graphs after app is mounted
       this.drawSummaryGraphs()
     },
 
@@ -174,8 +176,10 @@ window.onload = async function () {
         console.log('drawing graphs...')
 
         // TODO: scatter plot of exp by day of year
+        // TODO: waterfall chart for net worth by year
         drawSummaryChart('graph-month-summary', this.monthSummary, this.accountsList)
         drawNetworthChart('graph-month-networth', this.monthSummary, this.accountsList)
+        drawCashFlow('graph-cash-flow', this.summary)
       },
       filterTxns() {
         this.updateSummary()
@@ -244,13 +248,15 @@ window.onload = async function () {
           </div>
         </div>
 
+        <!-- inc-exp-ass -->
+        <!--
         <div class="row">
           <div class="col-sm">
             <div style="height: 30px; width: 100%; background: #00bb44; color: #000; text-align: center; font-weight: bold;">
               <span>{{ fmtAmt(summary.aggregate.inc.total) }}</span>
             </div>
             <div style="height: 30px; width: 100%; background: #eee; display: flex;">
-              <!-- https://uxengineer.com/inline-block-elements-100-percent-width/ -->
+              https://uxengineer.com/inline-block-elements-100-percent-width/
               <span
                 style="background: #cc0000; height: 30px; flex-grow: 1; color: #000; text-align: center; font-weight: bold;"
                 v-bind:style="{ width: (summary.aggregate.exp.perc)+'%' }">
@@ -264,9 +270,12 @@ window.onload = async function () {
             </div>
           </div>
         </div>
+        -->
 
         <div class="row">
-          <div style="margin: 10px auto;"></div>
+          <div class="col-sm">
+            <div id="graph-cash-flow" style="width: 100%; height: 500px;"></div>
+          </div>
         </div>
   
         <div class="row">
